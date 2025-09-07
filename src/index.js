@@ -3,62 +3,69 @@ const fs = require('fs');
 const path = require('path');
 
 const server = http.createServer((req, res) => {
-  try {
-    const inputFilePath = path.join(__dirname, '..', 'input.txt');
-    const data = fs.readFileSync(inputFilePath, 'utf-8');
-    const lines = data.split('\n');
+  // TODO: Implement your code here
+  if (req.method == "GET" && req.url == "/calculate") {
+    const filePath = path.join(__dirname,"..", "inputs.txt");
 
-    if (req.method === "GET" && req.url === "/calculate") {
-      if (lines.length < 3) {
-        res.writeHead(400, { "Content-Type": "text/plain" });
-        return res.end("Error: input.txt format invalid");
-      }
-
-      const num1 = parseFloat(lines[0]);
-      const num2 = parseFloat(lines[1]);
-      const operator = lines[2];
-
-      if (isNaN(num1) || isNaN(num2)) {
-        res.writeHead(400, { "Content-Type": "text/plain" });
-        return res.end("Error: Invalid number");
-      }
-
-      let result;
-
-      switch (operator) {
-        case "add":
-          result = num1 + num2;
-          break;
-        case "subtract":
-          result = num2 - num1;
-          break;
-        case "multiply":
-          result = num1 * num2;
-          break;
-        case "divide":
-          if (num2 === 0) {
-            res.writeHead(400, { "Content-Type": "text/plain" });
-            result = "Error: Division by zero";
-            break;
-          }
-          result = num2 / num1;
-          break;
-        default:
-          res.writeHead(400, { "Content-Type": "text/plain" });
-          return res.end("Error: Invalid operator");
-      }
-
-      fs.writeFileSync(path.join(__dirname, '..', 'output.txt'), result.toString());
-      res.writeHead(200, { "Content-Type": "text/plain" });
-      res.end(result.toString());
-    } else {
-      res.writeHead(404, { "Content-Type": "text/plain" });
-      res.end("404 Not Found");
+    let data;
+    try {
+        data = fs.readFileSync(filePath, "utf-8").trim().split("\n");
+    } catch (err) {
+        res.writeHead(500, { "Content-Type": "text/plain" });
+        return res.end("Unable to write result");
     }
-  } catch (err) {
-    res.writeHead(500, { "Content-Type": "text/plain" });
-    res.end("Error: input.txt or output.txt is missing or unreadable");
-  }
+
+    if (data.length < 3) {
+        res.writeHead(400, { "Content-Type": "text/plain" });
+        return res.end("Invalid Input File");
+    }
+
+    const num1 = Number(data[0].trim());
+    const num2 = Number(data[1].trim());
+    const operator = data[2].trim();
+
+    if (isNaN(num1) || isNaN(num2)) {
+        res.writeHead(400, { "Content-Type": "text/plain" });
+        return res.end("Invalid Number");
+    }
+
+    let result;
+
+    switch (operator) {
+        case "add":
+            result = num1 + num2;
+            break;
+        case "subtract":
+            result = num1 - num2;
+            break;
+        case "multiply":
+            result = num1 * num2;
+            break;
+        case "divide":
+            if (num2 == 0) {
+                res.writeHead(400, { "Content-Type": "text/plain" });
+                return res.end("Division by zero");
+            }
+            result = num1 / num2;
+            break;
+        default:
+            res.writeHead(400, { "Content-Type": "text/plain" });
+            return res.end("Invalid Operator");
+    }
+
+    try {
+        fs.writeFileSync(path.join(__dirname,"..", "result.txt"), result.toString());
+    } catch (err) {
+        res.writeHead(500, { "Content-Type": "text/plain" });
+        return res.end("Unable to write result");
+    }
+
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end(String(result));
+} else {
+    res.writeHead(404, { "Content-Type": "text/plain" });
+    res.end("Not Found");
+}
 });
 
 // Do not modify this
@@ -66,5 +73,5 @@ server.listen(3000, () => {
   console.log('Server is listening on port 3000');
 });
 
-// Export for testing
+
 module.exports = server;
